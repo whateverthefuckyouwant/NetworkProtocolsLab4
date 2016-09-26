@@ -19,7 +19,7 @@ import sys
 
 # Port number definitions
 # (May have to be adjusted if they collide with ports in use by other programs/services.)
-TCP_PORT = 12100
+TCP_PORT = 12345
 
 # Address to listen on when acting as server.
 # The address '' means accept any connection for our "receive" port from any network interface
@@ -30,7 +30,7 @@ LISTEN_ON_INTERFACE = ''
 # When connecting on one system, use 'localhost'
 # When "sending" to another system, use its IP address (or DNS name if there it has one)
 # OTHER_HOST = '155.92.x.x'
-OTHER_HOST = 'localhost'
+OTHER_HOST = '192.168.1.101'
 
 
 def main():
@@ -108,16 +108,18 @@ def tcp_send(server_host, server_port):
 def tcp_receive(listen_port):
     print("tcp_receive (server): listen_port={0}".format(listen_port))
     tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    tcp_socket.connect(OTHER_HOST,listen_port)
-    numberOfLines = getNumOfLines(tcp_socket)
+    tcp_socket.bind((socket.gethostname(),listen_port))
+    tcp_socket.listen(5)
+    clientSocket, addr = tcp_socket.accept()
+    numberOfLines = getNumOfLines(clientSocket)
     i = 1
     while numberOfLines != 0:
         listOfLinesInMessage = []
-        readMessage(numberOfLines, listOfLinesInMessage, tcp_socket)
-        tcp_socket.sendall(b'A')
+        readMessage(numberOfLines, listOfLinesInMessage, clientSocket)
+        clientSocket.sendall(b'A')
         writeMessageToFile(listOfLinesInMessage, i)
         i += 1
-        numberOfLines = getNumOfLines(tcp_socket)
+        numberOfLines = getNumOfLines(clientSocket)
 
     if numberOfLines == 0:
         tcp_socket.sendall(b'Q')
