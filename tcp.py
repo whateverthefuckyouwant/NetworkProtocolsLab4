@@ -107,10 +107,66 @@ def tcp_send(server_host, server_port):
 # Close data connection.
 def tcp_receive(listen_port):
     print("tcp_receive (server): listen_port={0}".format(listen_port))
-    # Replace this comment with your code.
+    tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    tcp_socket.connect(OTHER_HOST,listen_port)
+    numberOfLines = getNumOfLines(tcp_socket)
+    i = 1
+    while numberOfLines != 0:
+        listOfLinesInMessage = []
+        readMessage(numberOfLines, listOfLinesInMessage, tcp_socket)
+        tcp_socket.sendall(b'A')
+        writeMessageToFile(listOfLinesInMessage, i)
+        i += 1
+        numberOfLines = getNumOfLines(tcp_socket)
+
+    if numberOfLines == 0:
+        tcp_socket.sendall(b'Q')
+        tcp_socket.close()
 
 
-# Add more methods here (Delete this line)
+"""
+Author: Ben Ritter
+Purpose: get the first 4 bytes and then convert them into a number to be passed to the other functions
+Arguments: socket dataSocket
+Return: the number of newlines as an int
+"""
+def getNumOfLines(dataSocket):
+    number = b''
+    for i in range(0,4):
+        msg = next_byte(dataSocket)
+        number += msg
+    return int.from_bytes(number,'big')
+
+"""
+Author: Eric Nowac
+Purpose: use the number found in the first four bytes (numOfNewLines) and read that amount of lines and add them to a list (listOfLines) to be saved later
+Arguments: int numOfNewLines, empty list listOfLines, socket dataSocket
+Return: nothing
+"""
+def readMessage(numOfNewLines, listOfLines, dataSocket):
+    i = 0;
+    while i < numOfNewLines:
+        msg = next_byte(dataSocket)
+        if len(listOfLines) - 1 < i :
+            listOfLines.append(msg)
+        else:
+            listOfLines[i] += msg
+
+        if msg == b'\n':
+            i += 1
+
+"""
+Author: Eric Nowac
+Purpose: print the message to a text file
+Arguments: list listOfLines, int fileIndex
+Return: nothing
+"""
+def writeMessageToFile(listOfLines, numberOfFile):
+    file = open(str(numberOfFile) + ".txt","w")
+    for bytes in listOfLines:
+        file.write(bytes.decode())
+    file.close()
+
 
 # Read the next byte from the socket data_socket.
 # The data_socket argument should be an open tcp data connection socket, not a tcp listening socket.
